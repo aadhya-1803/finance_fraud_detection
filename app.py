@@ -9,14 +9,14 @@ from sklearn.metrics import (
     roc_auc_score, roc_curve, precision_recall_curve
 )
 
-# ── Page config ──────────────────────────────────────────────
+
 st.set_page_config(
     page_title="Fraud Detection Dashboard",
     layout="wide",
     page_icon="assets/favicon.ico" if False else None
 )
 
-# ── Load models and test data ────────────────────────────────
+
 @st.cache_resource
 def load_models():
     rf  = joblib.load('rf_model.pkl')
@@ -33,7 +33,6 @@ def load_test_data():
 rf_model, xgb_model, iso_model = load_models()
 X_test, y_test = load_test_data()
 
-# ── Sidebar controls ─────────────────────────────────────────
 st.sidebar.title("Controls")
 
 model_choice = st.sidebar.selectbox(
@@ -51,7 +50,6 @@ threshold = st.sidebar.slider(
 st.sidebar.markdown("---")
 st.sidebar.markdown("Threshold only affects probability-based models. Isolation Forest uses a fixed contamination rate.")
 
-# ── Generate predictions based on selection ──────────────────
 def get_predictions(model_name, threshold):
     if model_name == "XGBoost":
         probs = xgb_model.predict_proba(X_test)[:, 1]
@@ -70,7 +68,6 @@ def get_predictions(model_name, threshold):
 
 preds, probs = get_predictions(model_choice, threshold)
 
-# ── Metrics ───────────────────────────────────────────────────
 report = classification_report(y_test, preds, output_dict=True, target_names=["Normal", "Fraud"])
 fraud_precision = round(report["Fraud"]["precision"], 3)
 fraud_recall    = round(report["Fraud"]["recall"], 3)
@@ -79,12 +76,10 @@ auc_score       = round(roc_auc_score(y_test, probs), 4) if probs is not None el
 
 cm = confusion_matrix(y_test, preds)
 
-# ── Header ────────────────────────────────────────────────────
 st.title("Credit Card Fraud Detection Dashboard")
 st.markdown(f"Showing results for **{model_choice}** at decision threshold **{threshold}**")
 st.markdown("---")
 
-# ── Row 1: KPI Cards ─────────────────────────────────────────
 st.subheader("Dataset Overview")
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Total Transactions", "284,807")
@@ -94,7 +89,6 @@ col4.metric("Best AUC-ROC", "0.976")
 
 st.markdown("---")
 
-# ── Row 2: Live Model Metrics ─────────────────────────────────
 st.subheader(f"{model_choice} — Live Performance")
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Fraud Precision", fraud_precision)
@@ -104,7 +98,6 @@ col4.metric("AUC-ROC",         auc_score)
 
 st.markdown("---")
 
-# ── Row 3: Confusion Matrix + ROC Curve ──────────────────────
 col1, col2 = st.columns(2)
 
 with col1:
@@ -136,7 +129,6 @@ with col2:
 
 st.markdown("---")
 
-# ── Row 4: Precision-Recall Curve ────────────────────────────
 if probs is not None:
     st.subheader("Precision vs Recall at Different Thresholds")
     precisions, recalls, thresholds_pr = precision_recall_curve(y_test, probs)
@@ -153,7 +145,6 @@ if probs is not None:
 
 st.markdown("---")
 
-# ── Row 5: Model Comparison Table ────────────────────────────
 st.subheader("Model Comparison")
 
 comparison_df = pd.DataFrame({
